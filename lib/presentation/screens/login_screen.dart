@@ -1,8 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
 import 'otp_screen.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+
+  final TextEditingController phoneController = TextEditingController();
+  
+
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    phoneController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,23 +34,30 @@ class LoginScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 60),
-              // EXACT ILLUSTRATION FROM UI
               Center(
                 child: Image.asset(
-                  'assets/image/OBJECTS.png', 
+                  'assets/image/OBJECTS.png',
                   height: 180,
                 ),
               ),
               const SizedBox(height: 50),
               const Text(
                 "Enter Phone Number",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                style: TextStyle(
+                  fontSize: 18, 
+                  fontWeight: FontWeight.bold, 
+                  color: Colors.black87
+                ),
               ),
               const SizedBox(height: 15),
-              // STYLED TEXTFIELD
+
               TextField(
+                controller: phoneController,
                 keyboardType: TextInputType.phone,
+
+                maxLength: 10, 
                 decoration: InputDecoration(
+                  counterText: "", 
                   hintText: "Enter Phone Number *",
                   hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -46,7 +72,6 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 15),
-              // MULTI-COLOR TEXT (RichText)
               RichText(
                 text: const TextSpan(
                   text: "By Continuing, I agree to TotalX's ",
@@ -65,7 +90,7 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 30),
-              // PILL BUTTON
+              
               SizedBox(
                 width: double.infinity,
                 height: 55,
@@ -75,14 +100,68 @@ class LoginScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                     elevation: 0,
                   ),
-                  onPressed: () => Navigator.push(
-                    context, 
-                    MaterialPageRoute(builder: (_) => const OtpScreen())
-                  ),
-                  child: const Text(
-                    "Get OTP", 
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
+
+                  onPressed: _isLoading 
+                    ? null 
+                    : () async {
+                        String phone = phoneController.text.trim();
+                        
+
+                        if (phone.isEmpty || phone.length < 10) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Please enter a valid 10-digit phone number")),
+                          );
+                          return;
+                        }
+
+
+                        setState(() {
+                          _isLoading = true;
+                        });
+
+
+                        bool isSuccess = await context.read<UserProvider>().requestOtp(phone);
+
+
+                        if (mounted) {
+                          setState(() {
+                            _isLoading = false;
+                          });
+                        }
+
+
+                        if (isSuccess) {
+                          if (!mounted) return;
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const OtpScreen()),
+                          );
+                        } else {
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Failed to send OTP. Please try again."),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                  child: _isLoading
+
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Text(
+                          "Get OTP",
+                          style: TextStyle(
+                            color: Colors.white, 
+                            fontWeight: FontWeight.bold, 
+                            fontSize: 16
+                          ),
+                        ),
                 ),
               )
             ],

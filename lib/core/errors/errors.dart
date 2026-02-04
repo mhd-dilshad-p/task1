@@ -1,4 +1,4 @@
-/// App-specific error/failure classes
+
 
 class AppError implements Exception {
   final String message;

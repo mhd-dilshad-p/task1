@@ -38,6 +38,7 @@ dependencies:
   get_it: ^7.6.7    # For Dependency Injection (Clean Architecture standard)
   image_picker: ^1.0.0 # For selecting images
   http: ^1.2.0
+  dio: ^5.4.0
 
 
 

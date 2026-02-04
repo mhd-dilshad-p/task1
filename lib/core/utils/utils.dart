@@ -1,4 +1,3 @@
-/// Small helpers and formatters used across the app
 
 String shorten(String s, [int max = 30]) {
   if (s.length <= max) return s;

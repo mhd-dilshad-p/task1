@@ -36,13 +36,12 @@ class SortBottomSheet extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         context.read<UserProvider>().setFilter(title);
-        Navigator.pop(context); // Close sheet after selecting
+        Navigator.pop(context); 
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
           children: [
-            // Custom Radio UI to match your design image
             Container(
               height: 22,
               width: 22,
