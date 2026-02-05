@@ -12,15 +12,13 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
-
   final List<TextEditingController> _controllers =
       List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
   int _secondsRemaining = 59;
   Timer? _timer;
-  bool _isVerifying = false; 
- 
+  bool _isVerifying = false;
 
   @override
   void initState() {
@@ -31,12 +29,8 @@ class _OtpScreenState extends State<OtpScreen> {
   @override
   void dispose() {
     _timer?.cancel();
-    for (var controller in _controllers) {
-      controller.dispose();
-    }
-    for (var node in _focusNodes) {
-      node.dispose();
-    }
+    for (var c in _controllers) c.dispose();
+    for (var n in _focusNodes) n.dispose();
     super.dispose();
   }
 
@@ -44,11 +38,8 @@ class _OtpScreenState extends State<OtpScreen> {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
-          if (_secondsRemaining > 0) {
-            _secondsRemaining--;
-          } else {
-            _timer?.cancel();
-          }
+          if (_secondsRemaining > 0) _secondsRemaining--;
+          else _timer?.cancel();
         });
       }
     });
@@ -59,29 +50,24 @@ class _OtpScreenState extends State<OtpScreen> {
 
     if (enteredOtp.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter the complete 6-digit OTP")),
-      );
+          const SnackBar(content: Text("Please enter 6-digit OTP")));
       return;
     }
 
-
     setState(() => _isVerifying = true);
 
-
+    // CALL PROVIDER -> CALLS MSG91 PACKAGE VERIFY
     bool verified = await context.read<UserProvider>().validateOtp(enteredOtp);
 
-
-    if (mounted) {
-      setState(() => _isVerifying = false);
-    }
+    if (mounted) setState(() => _isVerifying = false);
 
     if (verified) {
       if (!mounted) return;
-
+      // Show Success Popup
       await _showSuccessDialog();
-
+      
       if (!mounted) return;
-
+      // Navigate to List
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const UserListScreen()),
@@ -91,70 +77,44 @@ class _OtpScreenState extends State<OtpScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Invalid OTP or Verification Failed."),
+          content: Text("Invalid OTP or Verification Failed"),
           backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
         ),
       );
     }
   }
 
-
   Future<void> _showSuccessDialog() async {
     return showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext ctx) {
-
+      builder: (ctx) {
         Future.delayed(const Duration(seconds: 2), () {
           if (ctx.mounted && Navigator.canPop(ctx)) {
             Navigator.of(ctx).pop();
           }
         });
-
         return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          elevation: 10,
-          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+            padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(15),
                   decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.check_rounded,
-                    color: Colors.green,
-                    size: 50,
-                  ),
+                      color: Colors.green.shade50, shape: BoxShape.circle),
+                  child: const Icon(Icons.check_rounded,
+                      color: Colors.green, size: 50),
                 ),
-                const SizedBox(height: 24),
-                const Text(
-                  "Verification Successful",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
+                const SizedBox(height: 20),
+                const Text("Success!",
+                    style:
+                        TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
-                Text(
-                  "You have successfully verified your\nphone number.",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                    height: 1.4,
-                  ),
-                ),
+                const Text("User verified successfully.",
+                    style: TextStyle(color: Colors.grey)),
               ],
             ),
           ),
@@ -165,7 +125,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final userPhoneNumber = context.watch<UserProvider>().phoneNumber;
+    final phone = context.read<UserProvider>().phoneNumber;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -177,64 +137,17 @@ class _OtpScreenState extends State<OtpScreen> {
             children: [
               const SizedBox(height: 40),
               Center(
-                child: Image.asset(
-                  'assets/image/Group.png',
-                  height: 180,
-                ),
-              ),
+                  child: Image.asset('assets/image/Group.png', height: 180)),
               const SizedBox(height: 40),
-              const Text(
-                "OTP Verification",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+              const Text("OTP Verification",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
-              Text(
-                "Enter the verification code we just sent to your number $userPhoneNumber.",
-                style: const TextStyle(
-                    fontSize: 14, color: Colors.grey, height: 1.5),
-              ),
+              Text("Enter OTP sent to $phone",
+                  style: const TextStyle(color: Colors.grey)),
               const SizedBox(height: 30),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(6, (index) => _otpInputBox(index)),
-              ),
-              const SizedBox(height: 15),
-              Center(
-                child: Text(
-                  _secondsRemaining > 0 ? "$_secondsRemaining Sec" : "0 Sec",
-                  style: const TextStyle(
-                      color: Colors.red, fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(height: 15),
-              Center(
-                child: GestureDetector(
-                  onTap: _secondsRemaining == 0
-                      ? () {
-                          setState(() => _secondsRemaining = 59);
-                          _startTimer();
-
-                        }
-                      : null,
-                  child: RichText(
-                    text: TextSpan(
-                      text: "Don't Get OTP? ",
-                      style:
-                          const TextStyle(color: Colors.black54, fontSize: 13),
-                      children: [
-                        TextSpan(
-                          text: "Resend",
-                          style: TextStyle(
-                              color: _secondsRemaining == 0
-                                  ? Colors.blue
-                                  : Colors.grey,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(6, (index) => _otpInputBox(index))),
               const SizedBox(height: 30),
               SizedBox(
                 width: double.infinity,
@@ -247,17 +160,11 @@ class _OtpScreenState extends State<OtpScreen> {
                   ),
                   onPressed: _isVerifying ? null : _verifyOtp,
                   child: _isVerifying
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2),
-                        )
-                      : const Text(
-                          "Verify",
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text("Verify",
                           style: TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -277,8 +184,7 @@ class _OtpScreenState extends State<OtpScreen> {
         border: Border.all(
             color: _controllers[index].text.isNotEmpty
                 ? Colors.red
-                : Colors.grey.shade300,
-            width: 1.5),
+                : Colors.grey.shade300),
       ),
       child: TextField(
         controller: _controllers[index],
@@ -286,23 +192,12 @@ class _OtpScreenState extends State<OtpScreen> {
         textAlign: TextAlign.center,
         keyboardType: TextInputType.number,
         maxLength: 1,
-        style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: _controllers[index].text.isNotEmpty
-                ? Colors.red
-                : Colors.black),
-        decoration: const InputDecoration(
-          counterText: "",
-          border: InputBorder.none,
-        ),
-        onChanged: (value) {
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        decoration: const InputDecoration(counterText: "", border: InputBorder.none),
+        onChanged: (val) {
           setState(() {});
-          if (value.isNotEmpty && index < 5) {
-            _focusNodes[index + 1].requestFocus();
-          } else if (value.isEmpty && index > 0) {
-            _focusNodes[index - 1].requestFocus();
-          }
+          if (val.isNotEmpty && index < 5) _focusNodes[index + 1].requestFocus();
+          if (val.isEmpty && index > 0) _focusNodes[index - 1].requestFocus();
         },
       ),
     );

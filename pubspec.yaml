@@ -39,6 +39,7 @@ dependencies:
   image_picker: ^1.0.0 # For selecting images
   http: ^1.2.0
   dio: ^5.4.0
+  msg91: ^1.0.5
 
 
 
