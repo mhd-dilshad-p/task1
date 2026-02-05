@@ -77,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           setState(() => _isLoading = true);
 
-                          // Call Provider -> Calls Msg91 Package
+
                           bool sent = await context
                               .read<UserProvider>()
                               .requestOtp(phone);

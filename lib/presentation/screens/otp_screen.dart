@@ -56,18 +56,18 @@ class _OtpScreenState extends State<OtpScreen> {
 
     setState(() => _isVerifying = true);
 
-    // CALL PROVIDER -> CALLS MSG91 PACKAGE VERIFY
+
     bool verified = await context.read<UserProvider>().validateOtp(enteredOtp);
 
     if (mounted) setState(() => _isVerifying = false);
 
     if (verified) {
       if (!mounted) return;
-      // Show Success Popup
+
       await _showSuccessDialog();
       
       if (!mounted) return;
-      // Navigate to List
+
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const UserListScreen()),
